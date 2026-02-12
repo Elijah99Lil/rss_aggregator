@@ -1,13 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"rss_aggregator_mod/internal/config"
 	"errors"
+	"fmt"
 	"os"
+	"log"
+	"database/sql"
+	"rss_aggregator_mod/internal/config"
+	"rss_aggregator_mod/internal/database"
+	_ "github.com/lib/pq"
 )
 
 type state struct {
+	db *database.Queries
 	cfg	*config.Config
 }
 
@@ -32,36 +37,34 @@ func (c *commands) register(name string, f func(*state, command) error) {
 	c.handlers[name] = f
 }
 
-func handlerLogin(s *state, cmd command) error {
-	if len(cmd.args) != 1 {
-		fmt.Println("username is required")
-		os.Exit(1)
-	}
-
-	username := cmd.args[0]
-
-	err := s.cfg.SetUser(username)	
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("user has been set")
-	return nil
-}
-	
-
-
 func main() {
 	cfg, err := config.Read()
 	if err != nil {
-		fmt.Println("error:", err)
-		return
+		log.Fatalf("error reading config: %v", err)
 	}
-	programState := &state{cfg: &cfg}
+
+	db, err := sql.Open("postgres", cfg.DBURL)
+	if err != nil {
+		log.Fatalf("error connecting to database: %v", err)
+	}
+	defer db.Close()
+
+	dbQueries := database.New(db)
+
+	programState := &state{
+		db: dbQueries,
+		cfg: &cfg,
+	}
 	cmds := commands{
 		handlers: make(map[string]func(*state, command) error),
 	}
+
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
+	cmds.register("reset", handlerReset)
+	cmds.register("users", handlerGet)
+	cmds.register("agg", handlerAgg)
+
 	args := os.Args
 	if len(args) < 2 {
 		fmt.Println("Not enough arguments")
@@ -74,7 +77,6 @@ func main() {
 	}
 	err = cmds.run(programState, cmd)
 	if err != nil {
-		fmt.Println("error:", err)
-		return
+		log.Fatal(err)
 	}
 }
