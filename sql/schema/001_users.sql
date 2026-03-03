@@ -14,3 +14,5 @@ DROP TABLE users;
 
 
 -- psql url command to get into the gator server:  psql "postgres://postgres:@localhost:5432/gator" -- 
+
+-- to run UP migrations (just change up for down when down migrating): goose -dir sql/schema postgres "postgres://postgres:postgres@localhost:5432/gator" up
