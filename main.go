@@ -6,8 +6,8 @@ import (
 	"os"
 	"log"
 	"database/sql"
-	"rss_aggregator_mod/internal/config"
-	"rss_aggregator_mod/internal/database"
+	"github.com/Elijah99Lil/rss_aggregator/internal/config"
+	"github.com/Elijah99Lil/rss_aggregator/internal/database"
 	_ "github.com/lib/pq"
 	"context"
 )
@@ -70,6 +70,8 @@ func main() {
 	cmds.register("follow", middlewareLoggedIn(handlerFollowFeeds))
 	cmds.register("following", middlewareLoggedIn(handlerFollowing))
 	cmds.register("unfollow", middlewareLoggedIn(handlerUnfollow))
+	cmds.register("browse", middlewareLoggedIn(handlerBrowse))
+	cmds.register("help", handlerHelp)
 
 	args := os.Args
 	if len(args) < 2 {

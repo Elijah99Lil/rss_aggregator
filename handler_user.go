@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"rss_aggregator_mod/internal/database"
+	"github.com/Elijah99Lil/rss_aggregator/internal/database"
 	"strings"
 	"time"
 	"github.com/google/uuid"
@@ -83,13 +83,44 @@ func handlerGet(s *state, cmd command) error {
 }
 
 func handlerAgg(s *state, cmd command) error {
-	ctx := context.Background()
-	feedUrl := "https://www.wagslane.dev/index.xml"
-	feed, err := fetchFeed(ctx, feedUrl)
+	if len(cmd.args) != 1 {
+		return fmt.Errorf("usage: go run . agg <time duration like 1s>")
+	}
+
+	timeBetweenRequests, err := time.ParseDuration(cmd.args[0])
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%+v\n", feed)
+
+	ticker := time.NewTicker(timeBetweenRequests)
+	defer ticker.Stop()
+
+	fmt.Printf("Collecting feeds every %v\n", timeBetweenRequests)
+
+	for ; ; <-ticker.C {
+		if err := scrapeFeeds(s); err != nil {
+			return err
+		}
+	}
+}
+
+func handlerHelp(s *state, cmd command) error {
+	fmt.Println(
+		`Here are the commands available:
+The prefix is always "go run . <command>"
+
+	- login <user>
+	- register <user>
+	- reset
+	- users
+	- agg (Use this in a different terminal to auto-scrape feeds in the background)
+	- addfeed <url>
+	- feeds
+	- follow <url>
+	- following
+	- unfollow <url>
+	- browse`,
+	)
 	return nil
 }
 

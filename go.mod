@@ -1,4 +1,4 @@
-module rss_aggregator_mod
+module github.com/Elijah99Lil/rss_aggregator
 
 go 1.23.0
 
